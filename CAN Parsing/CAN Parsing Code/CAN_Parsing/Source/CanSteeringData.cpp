@@ -63,8 +63,10 @@ void CanSteeringData::determineWheelAngle()
 {
 	unsigned __int64 canData = 0U;
 	getMessageData(&canData);
-	unsigned __int16 wheelAngle = canData >> 48;
-	m_wheelAngle = (((double)wheelAngle)/256) - 125;
+	unsigned __int16 wheelAngleBytes = canData >> 48;
+	unsigned __int16 lowerWheelByte = wheelAngleBytes >> 8;
+	unsigned __int16 upperWheelByte = (wheelAngleBytes & 0x00FF) << 8;
+	m_wheelAngle = (((double)(upperWheelByte | lowerWheelByte)) / 256) - 125;
 	//cout << "Found angle " << m_wheelAngle;
 }
 
