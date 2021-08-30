@@ -29,14 +29,14 @@ struct wheelData
 
 void chopOffHeader(fstream *);
 
-int getTimestamp(string, string *);
+int getTimestamp(const string, string *);
 
-int getIdentifier(int, string, string *);
+int getIdentifier(const int, const string, string *);
 
-int getMode(int, string, string *);
+int getMode(const int, const string, string *);
 
-int getDataBytes(int, string, string *);
+int getDataBytes(const int, const string, string *);
 
-CanData::DataType getDataType(int);
+CanData::DataType getDataType(const int);
 
-bool outputWheelDataToCsv(vector<CanData*>, int, string);
+bool outputWheelDataToCsv(vector<CanData*>, const int, string);

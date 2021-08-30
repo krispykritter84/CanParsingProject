@@ -31,7 +31,6 @@ int main(int argc, char ** argv)
         return 0;
     }
     int lineCount = 0;
-    int steerAxleMsgCnt = 0;
     vector<CanData*> canDataVector;
      
     // first, get passed the header:
@@ -52,24 +51,39 @@ int main(int argc, char ** argv)
         string parsedIdentifier;
         string parsedMode;
         string line;
-        int stringPosition = 0;
+        int oldStringPosition = 0;
+        int newStringPosition = 0;
 
         getline(canFileStream, line);
         // get our timestamp
-        stringPosition = getTimestamp(line, &parsedTimestamp);
+        newStringPosition = getTimestamp(line, &parsedTimestamp);
         //cout << "Timestamp is " << parsedTimestamp << endl;
+        if (-1 == newStringPosition)
+            continue;
+        else
+            oldStringPosition = newStringPosition;
 
         // get our module identifier
-        stringPosition = getIdentifier(stringPosition, line, &parsedIdentifier);
+        newStringPosition = getIdentifier(oldStringPosition, line, &parsedIdentifier);
         //cout << "Identifier is " << parsedIdentifier << endl;
+        if (-1 == newStringPosition)
+            continue;
+        else
+            oldStringPosition = newStringPosition;
 
         // get our mode
-        stringPosition = getMode(stringPosition, line, &parsedMode);
+        newStringPosition = getMode(oldStringPosition, line, &parsedMode);
         //cout << "Mode is " << parsedMode << endl;
+        if (-1 == newStringPosition)
+            continue;
+        else
+            oldStringPosition = newStringPosition;
 
         // get our data bytes
         string* data = new string[8];
-        int dataByteCount = getDataBytes(stringPosition, line, data);
+        int dataByteCount = getDataBytes(oldStringPosition, line, data);
+        if (-1 == dataByteCount)
+            continue;
         CanData::DataType thisCanDataType = getDataType(stoi(parsedIdentifier, 0, 16));
 
         // figure which type we are
@@ -112,41 +126,60 @@ int main(int argc, char ** argv)
 void chopOffHeader(fstream * fs)
 {
     string line;
-    while (true)
+    // null check pointer
+    if (NULL != fs)
     {
-        getline(*fs, line);
-        if (line[0] == '/')
+        while (true)
         {
-            break;
+            getline(*fs, line);
+            if (line[0] == '/')
+            {
+                break;
+            }
         }
     }
 }
 
 // get our timestamp data
 // return is current position in input line
-int getTimestamp(string inputLine, string * outputLine)
+int getTimestamp(const string inputLine, string * outputLine)
 {
     // skip passed first set of spaces
     int i = 0;
+    // if our input line is null, return
+    if (0 == inputLine.size())
+    {
+        return -1;
+    }
     while (inputLine[i] == ' ')
     {
         i++;
     }
     // found start of time stamp, now find end of timestamp
     int j = i;
-    while (inputLine[j] != ' ')
+    while (inputLine[j] != ' ' && inputLine[j] != '\0')
     {
         j++;
     }
     // now return subsring from start of timestamp to end of timestamp minus start
-    *outputLine = inputLine.substr(i, j-i);
+    *outputLine = inputLine.substr(i, j - i);
     return j; // current position in line
 }
 
 // figure out our message number, keeping just the hex characters
 // return is current position in input line
-int getIdentifier(int pos, string inputLine, string * outputLine)
+int getIdentifier(const int pos, const string inputLine, string * outputLine)
 {
+    // if our input line is null, return
+    if (NULL == &inputLine)
+    {
+        return -1;
+    }
+    // verify string is at least as long as we want to make it
+    if (pos + 4 > (int)inputLine.size())
+    {
+        return -1;
+    }
     // cheating, but move 4 places to the right
     // we'll assume this format is guaranteed for now
     int i = pos + 4;
@@ -160,6 +193,10 @@ int getIdentifier(int pos, string inputLine, string * outputLine)
     }
     // get our value
     longId = inputLine.substr(i, j - i);
+    if (longId.size() == 0)
+    {
+        return -1;
+    }
     // remove trailing x, if it exists, and set our output
     if (longId[j - i - 1] == 'x')
     {
@@ -178,8 +215,13 @@ int getIdentifier(int pos, string inputLine, string * outputLine)
 // figures out if this message is a receive (Rx) or transmit (Tx)
 // there weren't any Tx's in our data but it's easy enough to 
 // account for.
-int getMode(int pos, string inputLine, string * outputLine)
+int getMode(const int pos, const string inputLine, string * outputLine)
 {
+    // if our input line is null, return
+    if (NULL == &inputLine)
+    {
+        return -1;
+    }
     // skip passed the spaces
     int i = pos;
     while (inputLine[i] == ' ')
@@ -188,9 +230,14 @@ int getMode(int pos, string inputLine, string * outputLine)
     }
     // found start of mode now find end of mode
     int j = i;
-    while (inputLine[j] != ' ')
+    while (inputLine[j] != ' ' && inputLine[j] != '\0')
     {
         j++;
+    }
+    // this should be size 2, if not, the line is misformatted
+    if (j - i != 2)
+    {
+        return -1;
     }
     // now return subsring from start of timestamp to end of timestamp minus start
     *outputLine = inputLine.substr(i, j - i);
@@ -199,15 +246,33 @@ int getMode(int pos, string inputLine, string * outputLine)
 
 // returns CAN data in a string array via a pointer
 // returns number of data bytes directly as int
-int getDataBytes(int pos, string inputLine, string * outputDataBytes)
+int getDataBytes(const int pos, const string inputLine, string * outputDataBytes)
 {
+    // if our input line is null, return
+    if (NULL == &inputLine)
+    {
+        return -1;
+    }
+    // verify string is at least as long as we want to make it
+    if (pos + 5 > (int)inputLine.size())
+    {
+        return -1;
+    }
     // start by getting data bytes count
     // cheating again, advancing position by five
     int i = pos + 5;
     int dataByteCount = stoi(inputLine.substr(i, 1));
+    if (i + 2 > (int)inputLine.size())
+    {
+        return -1;
+    }
     // update our position
     i += 2;
     // Parse out the data bits
+    if ((dataByteCount * 3) - 1 > inputLine.size() - i)
+    {
+        return -1;
+    }
     for (int j = 0; j < dataByteCount; j++)
     {
         outputDataBytes[j] = inputLine.substr(i, 2);
@@ -217,7 +282,7 @@ int getDataBytes(int pos, string inputLine, string * outputDataBytes)
 }
 
 // figure out what type of message we got from message header data
-CanData::DataType getDataType(int id)
+CanData::DataType getDataType(const int id)
 {
     switch (id)
     {
@@ -230,7 +295,7 @@ CanData::DataType getDataType(int id)
 
 // open a datafile and output the messages of interest in CSV format
 // because .... it's easy.
-bool outputWheelDataToCsv(vector<CanData*> cd, int messageIdentifier, string filename)
+bool outputWheelDataToCsv(vector<CanData*> cd, const int messageIdentifier, string filename)
 {
     size_t position = filename.find(".csv");
     if (position == string::npos)

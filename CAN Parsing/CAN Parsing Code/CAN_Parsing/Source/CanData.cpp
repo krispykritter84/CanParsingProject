@@ -8,6 +8,8 @@
 */
 #include "../Headers/CanData.h"
 
+
+
 // constructor
 CanData::CanData()
 {
@@ -46,18 +48,18 @@ CanData::DataType CanData::getDataType()
 }
 
 // setters
-void CanData::setIdentifier(unsigned int id)
+void CanData::setIdentifier(const unsigned int id)
 {
 	m_identifier = id;
 	setDataType();
 }
 
-void CanData::setTimestamp(double ts)
+void CanData::setTimestamp(const double ts)
 {
 	m_timestamp = ts;
 }
 
-void CanData::setDataCount(unsigned int dc)
+void CanData::setDataCount(const unsigned int dc)
 {
 	m_dataCount = dc;
 }
@@ -71,7 +73,7 @@ void CanData::setDataType()
 {
 	switch (m_identifier) 
 	{
-	case(418384768):
+	case(STEERING_MESSAGE_NUMBER):
 		m_dataType = CanData::DataType::steeringVal;
 		break;
 	default:

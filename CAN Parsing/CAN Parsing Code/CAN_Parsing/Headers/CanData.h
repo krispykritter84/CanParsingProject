@@ -10,6 +10,7 @@ using namespace std;
 
 class CanData
 {
+	
 
 public:
 
@@ -20,14 +21,16 @@ public:
 		steeringVal = 2
 	};
 
+	static const int STEERING_MESSAGE_NUMBER = 418384768;
+
 	CanData();
 	virtual int getIdentifier();
 	int getDataCount();
 	double getTimestamp();
 	string* getMessageData();
-	void setTimestamp(double);
-	void setIdentifier(unsigned int);
-	void setDataCount(unsigned int);
+	void setTimestamp(const double);
+	void setIdentifier(const unsigned int);
+	void setDataCount(const unsigned int);
 	void setDataString(string*);
 	void convertStringMessageToU64(string*);
 	void getMessageData(unsigned __int64*);

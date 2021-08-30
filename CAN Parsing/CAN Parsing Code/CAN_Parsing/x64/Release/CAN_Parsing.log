@@ -1,0 +1,9 @@
+﻿  CanData.cpp
+  CanParsing.cpp
+  CanSteeringData.cpp
+  CanUnknownData.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 345 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  CAN_Parsing.vcxproj -> C:\Users\Krispy\Documents\Trimble\CAN Parsing\CAN Parsing Code\x64\Release\CAN_Parsing.exe
